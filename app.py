@@ -285,8 +285,9 @@ class PinList(Resource):
     def get(self):
         """List all pins"""
         res = pin_util.get_all()
+        resOld = pin_util.pins
         print(f'return pins {res}')
-        return res
+        return resOld
 
     @ns.expect(pin_model)
     @ns.marshal_with(pin_model, code=201)
