@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_restx import Api, Resource, fields
 from time import sleep, perf_counter
@@ -44,7 +45,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     channel_id INTEGER,
     operation TEXT,
-    duration INTEGER,
+    duration REAL,
     FOREIGN KEY(channel_id) REFERENCES channels(id)
 )''')
 
@@ -65,7 +66,7 @@ pin_model = api.model('pins', {
 task_model = api.model('task', {
     'id': fields.Integer(readonly=True, description='The task unique identifier'),
     'operation': fields.String(required=True, description='on, off or sleep'),
-    'duration': fields.Integer(),
+    'duration': fields.Float(),
     'channel_id': fields.Integer(required=True, description='what channel it belongs to..'),
 })
 
@@ -83,6 +84,7 @@ routine_model = api.model('routine', {
 # Namespace
 ns = api.namespace('pins', description='Pin related operations')
 routine_ns = api.namespace('routine', description='Routines that can be executed')
+os_ns = api.namespace('os', description='OS procedures')
 
 # GPIO Setup
 GPIO.setmode(GPIO.BCM)
@@ -457,7 +459,12 @@ class RoutineRun(Resource):
         """Fetch a pin given its resource identifier"""
         return routine_util.run(id)
 
-
+@os_ns.route('/shutdown')
+class ShutdownResource(Resource):
+    def get(self):
+        """Shutdown the Raspberry Pi"""
+        os.system('sudo shutdown now')
+        return {"message": "Shutting down..."}, 200
 
 
 @ns.route('/')  # keep in mind this our ns-namespace (pins/)
